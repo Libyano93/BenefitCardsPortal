@@ -1,0 +1,12 @@
+@model BenefitCardsPortal.Models.EmployeeAuditViewModel
+@{ ViewData["Title"] = "تقرير إلغاء التسليم"; }
+<div class="page-heading d-flex flex-wrap justify-content-between align-items-center gap-3"><div><span class="eyebrow">مراجعة التسليمات</span><h1 class="h2 mb-1">تقرير إلغاء التسليم</h1><p class="text-muted mb-0">يعرض آخر 500 عملية تراجع مسجلة مع الموظف والوقت وبيانات العملية.</p></div><a asp-action="Audit" class="btn btn-outline-secondary">سجل العمليات الكامل</a></div>
+<form method="get" asp-action="ReceiptReversals" class="filter-panel row g-2 align-items-end mb-3"><div class="col-sm-6 col-lg-4"><label class="form-label">الموظف الذي ألغى التسجيل</label><input class="form-control" name="employee" value="@Model.Employee" placeholder="اسم المستخدم أو البريد"/></div><div class="col-sm-6 col-lg-3"><label class="form-label">من تاريخ</label><input class="form-control" type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")"/></div><div class="col-sm-6 col-lg-3"><label class="form-label">إلى تاريخ</label><input class="form-control" type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")"/></div><div class="col-lg-2 d-flex gap-2"><button class="btn btn-primary">تصفية</button><a asp-action="ReceiptReversals" class="btn btn-light">مسح</a></div></form>
+<div class="search-result-count mb-3"><span>عمليات إلغاء التسليم المعروضة</span><strong>@Model.Events.Count</strong></div>
+<div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>التاريخ والوقت (ليبيا)</th><th>الموظف</th><th>الدفعة</th><th>السجل</th><th>التفاصيل</th></tr></thead><tbody>
+@if (Model.Events.Count == 0) { <tr><td colspan="5" class="text-center py-5 text-muted">لا توجد عمليات إلغاء مطابقة.</td></tr> }
+@foreach (var entry in Model.Events)
+{
+    <tr><td dir="ltr" class="text-end">@DateTime.SpecifyKind(entry.OccurredAtUtc, DateTimeKind.Utc).AddHours(2).ToString("yyyy-MM-dd HH:mm")</td><td>@entry.Actor</td><td>@if (entry.BatchId is int batchId) { <a asp-action="Details" asp-route-id="@batchId">@batchId</a> } else { <span>—</span> }</td><td>@(entry.RecordId?.ToString() ?? "—")</td><td>@entry.Summary</td></tr>
+}
+</tbody></table></div></div>

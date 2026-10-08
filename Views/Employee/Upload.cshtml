@@ -1,0 +1,42 @@
+@model BenefitCardsPortal.Models.BatchUploadViewModel
+@{ ViewData["Title"] = Model.DraftId is null ? "رفع كشف" : "معاينة الكشف"; var isPreview = !string.IsNullOrWhiteSpace(Model.DraftId); }
+<div class="page-heading"><span class="eyebrow">دفعة جديدة</span><h1 class="h2">@(isPreview ? "راجع بيانات الكشف قبل رفعه" : "رفع كشف المستفيدين")</h1><p class="text-muted">@(isPreview ? $"تمت قراءة {Model.Rows.Count} سجلًا من {Model.SourceFileName}. راجع الخانات وعدّل ما يلزم، ثم ارفع الدفعة." : "اختر شهر الصلاحية وسنتها، ثم ارفع صورة الكشف أو ملف PDF لقراءته تلقائيًا.")</p></div>
+@if (!isPreview)
+{
+    <div class="card form-card border-0 shadow-sm"><form asp-action="PreviewUpload" method="post" enctype="multipart/form-data">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="row g-3 mb-3"><div class="col-sm-6"><label asp-for="Month" class="form-label">شهر الصلاحية</label><select asp-for="Month" class="form-select"><option value="">اختر الشهر</option>@for (var m=1;m<=12;m++){<option value="@m">@m</option>}</select><span asp-validation-for="Month" class="text-danger"></span></div><div class="col-sm-6"><label asp-for="Year" class="form-label">السنة</label><input asp-for="Year" class="form-control" /><span asp-validation-for="Year" class="text-danger"></span></div></div>
+    <label asp-for="File" class="form-label">ملف الكشف (PDF أو صورة)</label><label class="upload-dropzone" for="File"><span class="upload-symbol">⇧</span><strong>اسحب الكشف إلى هنا أو اضغط لاختياره</strong><span class="text-muted small">ستظهر البيانات المستخرجة للمراجعة قبل حفظ الدفعة</span><span id="fileName" class="file-name">PDF أو PNG أو JPG · حتى 20 ميغابايت</span><input asp-for="File" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" /></label><span asp-validation-for="File" class="text-danger"></span><p class="form-text mt-2">تتم القراءة محليًا؛ لن تُضاف الدفعة إلى النظام قبل مراجعتها والضغط على زر الرفع.</p>
+    <div class="d-flex gap-2 mt-4"><button class="btn btn-primary btn-lg" id="previewSubmit" type="submit">قراءة الكشف ومعاينته</button><a asp-action="Index" class="btn btn-light">إلغاء</a></div></form></div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(Model.OcrNotice)) { <div class="alert alert-warning">@Model.OcrNotice</div> }
+    @if (Model.ReviewFindings.Count > 0) { <section class="quality-panel mb-4"><h2 class="h5 mb-2">الفحص الأولي للكشف · @Model.ReviewFindings.Sum(x => x.Count) ملاحظة</h2><p class="small text-muted">صحح الأخطاء التي تمنع الاعتماد، وتحقق بصريًا من الأرقام التي لا تطابق طول الحقل المتوقع.</p><ul class="mb-0">@foreach (var finding in Model.ReviewFindings) { <li><span class="@(finding.IsBlocking ? "text-danger fw-bold" : "text-warning-emphasis")">@(finding.IsBlocking ? "يلزم التصحيح" : "يرجى التحقق"):</span> @finding.Message — @finding.Count سجل</li> }</ul></section> }
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"><div><span class="count-chip">@Model.Month/@Model.Year</span><span class="count-chip">@Model.Rows.Count سجل</span><span class="text-muted small">@Model.SourceFileName</span></div><a class="btn btn-outline-primary" asp-action="PreviewDraftFile" asp-route-draftId="@Model.DraftId" target="_blank">فتح المصدر في نافذة النظام</a></div>
+    <details class="source-preview mb-4"><summary>عرض الكشف الأصلي ومقارنة الصفوف هنا</summary><iframe src="@Url.Action("PreviewDraftFile", new { draftId = Model.DraftId })" title="الكشف الأصلي للمعاينة" loading="lazy"></iframe></details>
+    <form asp-action="CommitUpload" method="post" id="commitUploadForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="DraftId" value="@Model.DraftId" />
+        <input type="hidden" name="Month" value="@Model.Month" />
+        <input type="hidden" name="Year" value="@Model.Year" />
+        @if (Model.HasDuplicatePeriod)
+        {
+            <section class="duplicate-period-panel mb-3"><div class="duplicate-period-icon">↻</div><div class="flex-grow-1"><strong>يوجد كشف سابق لشهر @Model.Month/@Model.Year</strong><p class="mb-2">قد تكون هذه دفعة إضافية لنفس الفترة. يمكنك المتابعة، وستُحفظ كدفعة مستقلة دون استبدال السجلات السابقة.</p><label class="form-check"><input asp-for="ConfirmDuplicatePeriod" class="form-check-input" /><span class="form-check-label fw-bold">راجعت التنبيه وأرغب في رفع هذه الدفعة الإضافية</span></label><span asp-validation-for="ConfirmDuplicatePeriod" class="text-danger"></span></div></section>
+        }
+        <div class="alert alert-info">يمكن تعديل الاسم والأرقام داخل الجدول. لن تُسجل حالات الاستلام إلا بعد حفظ الدفعة ثم تسجيل تسليم كل بطاقة.</div>
+        <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0 review-table">
+            <thead><tr><th>الرقم</th><th>رقم التسلسل</th><th>اسم المستفيد من البطاقة</th><th>الاسم على البطاقة</th><th>جزء من رقم البطاقة</th><th>جزء الرقم الوطني</th><th>ملاحظات</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Rows.Count; i++)
+            {
+                <tr class="pending-row"><td><input name="Rows[@i].SourceRowNumber" value="@Model.Rows[i].SourceRowNumber" class="form-control numeric-field" maxlength="20" aria-label="الرقم" /></td><td><input name="Rows[@i].SerialNumber" value="@Model.Rows[i].SerialNumber" class="form-control numeric-field" maxlength="40" aria-label="رقم التسلسل" /></td><td><input name="Rows[@i].BeneficiaryName" value="@Model.Rows[i].BeneficiaryName" class="form-control" required maxlength="200" aria-label="اسم المستفيد من البطاقة" /></td><td><input name="Rows[@i].CardName" value="@Model.Rows[i].CardName" class="form-control" maxlength="200" aria-label="الاسم على البطاقة" /></td><td><input name="Rows[@i].CardNumber" value="@Model.Rows[i].CardNumber" class="form-control numeric-field" maxlength="40" aria-label="جزء من رقم البطاقة" /></td><td><input name="Rows[@i].NationalNumber" value="@Model.Rows[i].NationalNumber" class="form-control numeric-field" maxlength="32" aria-label="جزء الرقم الوطني" /></td><td><input name="Rows[@i].Notes" value="@Model.Rows[i].Notes" class="form-control" maxlength="500" aria-label="ملاحظات" /></td></tr>
+            }
+            @if (Model.Rows.Count == 0) { <tr><td colspan="7" class="text-center py-4">لم يتم العثور على صفوف. ارفع نسخة أوضح أو ألغِ المعاينة.</td></tr> }
+            </tbody>
+        </table></div></div>
+        <div class="d-flex flex-wrap gap-2 mt-4"><button type="submit" class="btn btn-success btn-lg" disabled="@(Model.Rows.Count == 0)">تأكيد ورفع الدفعة إلى النظام</button></div>
+    </form>
+    <form asp-action="CancelDraft" method="post" class="mt-2">@Html.AntiForgeryToken()<input type="hidden" name="draftId" value="@Model.DraftId" /><button class="btn btn-light btn-lg">إلغاء المعاينة</button></form>
+}
+@section Scripts { <script>const zone=document.querySelector('.upload-dropzone'),input=document.getElementById('File'),name=document.getElementById('fileName'),uploadForm=document.querySelector('form[enctype="multipart/form-data"]');input?.addEventListener('change',()=>{if(input.files.length){name.textContent=input.files[0].name;zone.classList.add('has-file');setTimeout(()=>uploadForm?.requestSubmit(),150)}});for(const eventName of ['dragenter','dragover'])zone?.addEventListener(eventName,e=>{e.preventDefault();zone.classList.add('drag-active')});for(const eventName of ['dragleave','drop'])zone?.addEventListener(eventName,e=>{e.preventDefault();zone.classList.remove('drag-active')});zone?.addEventListener('drop',e=>{if(e.dataTransfer.files.length){if(e.dataTransfer.files.length>1){name.textContent='اختر كشفًا واحدًا في كل دفعة';return}input.files=e.dataTransfer.files;input.dispatchEvent(new Event('change',{bubbles:true}))}});document.querySelector('#commitUploadForm')?.addEventListener('submit',()=>{const button=document.querySelector('#commitUploadForm button[type=submit]');button.disabled=true;button.innerHTML='<span class="spinner-border spinner-border-sm ms-2"></span> جارٍ حفظ الدفعة…'});uploadForm?.addEventListener('submit',()=>{const button=document.getElementById('previewSubmit');button.disabled=true;button.innerHTML='<span class="spinner-border spinner-border-sm ms-2"></span> جارٍ قراءة الكشف…'})</script> }

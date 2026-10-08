@@ -1,0 +1,18 @@
+@model BenefitCardsPortal.Models.BackupSettingsViewModel
+@{ ViewData["Title"] = "النسخ الاحتياطي"; }
+<div class="page-heading d-flex flex-wrap justify-content-between align-items-center gap-3"><div><span class="eyebrow">حماية بيانات النظام</span><h1 class="h2 mb-1">النسخ الاحتياطي</h1><p class="text-muted mb-0">يحفظ نسخة متسقة من قاعدة البيانات وملفات الكشوف الأصلية في أرشيف واحد.</p></div><a asp-action="Index" class="btn btn-light">العودة إلى الإعدادات</a></div>
+<section class="backup-status-card mb-4"><div class="backup-status-icon">⟲</div><div><strong>الجدولة اليومية</strong><p class="mb-0">@(Model.Enabled ? $"مفعّلة يوميًا عند {Model.DailyTime} بتوقيت ليبيا" : "متوقفة؛ يمكنك إنشاء نسخة يدوية في أي وقت")</p></div><span class="status-pill @(Model.Enabled ? "status-done" : "status-wait")">@(Model.Enabled ? "مفعّلة" : "متوقفة")</span></section>
+<div class="row g-4">
+    <div class="col-lg-5"><section class="card border-0 shadow-sm h-100"><div class="card-body p-4"><h2 class="h5 mb-3">إعداد الجدولة والاحتفاظ</h2><form asp-action="Backup" method="post">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <div class="form-check form-switch mb-3"><input asp-for="Enabled" class="form-check-input"/><label asp-for="Enabled" class="form-check-label fw-bold">تفعيل النسخ اليومي التلقائي</label></div>
+        <div class="mb-3"><label asp-for="DailyTime" class="form-label">وقت النسخ (بتوقيت ليبيا)</label><input asp-for="DailyTime" class="form-control" type="time"/><span asp-validation-for="DailyTime" class="text-danger"></span></div>
+        <div class="mb-4"><label asp-for="RetentionDays" class="form-label">مدة الاحتفاظ بالنسخ (أيام)</label><input asp-for="RetentionDays" class="form-control" type="number" min="1" max="3650"/><span asp-validation-for="RetentionDays" class="text-danger"></span><div class="form-text">تحذف النسخ الأقدم تلقائيًا بعد نجاح نسخة جديدة.</div></div>
+        <button class="btn btn-primary">حفظ إعدادات النسخ</button>
+    </form></div></section></div>
+    <div class="col-lg-7"><section class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div><h2 class="h5 mb-1">إنشاء نسخة الآن</h2><p class="small text-muted mb-0">يمكنك إنشاء نسخة فورية دون انتظار الموعد اليومي.</p></div><form asp-action="CreateBackupNow" method="post">@Html.AntiForgeryToken()<button class="btn btn-success">إنشاء نسخة احتياطية</button></form></div>
+        <div class="backup-security-note mb-3">احفظ نسخة إضافية خارج هذا الجهاز. للحفاظ على إمكانية فك تشفير كلمة مرور SMTP عند الاستعادة، احتفظ بمجلد <code>App_Data/DataProtectionKeys</code> في مكان آمن منفصل.</div>
+        <h3 class="h6">النسخ المحفوظة <span class="count-chip">@Model.Backups.Count</span></h3>
+        @if (Model.Backups.Count == 0) { <div class="text-muted small py-3">لم تُنشأ نسخ بعد.</div> }
+        else { <div class="backup-list">@foreach (var backup in Model.Backups) { <div class="backup-item"><div><strong dir="ltr">@backup.FileName</strong><small>@backup.CreatedAtLocal.ToString("yyyy-MM-dd HH:mm") · @($"{backup.SizeBytes / 1024d / 1024d:0.00} MB")</small></div><a asp-action="DownloadBackup" asp-route-fileName="@backup.FileName" class="btn btn-sm btn-outline-primary">تنزيل</a></div> }</div> }
+    </div></section></div>
+</div>

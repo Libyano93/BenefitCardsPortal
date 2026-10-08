@@ -1,0 +1,4 @@
+Cairo typeface
+Copyright 2009 The Cairo Project Authors (https://github.com/Gue3bara/Cairo)
+Distributed under the SIL Open Font License 1.1.
+License text: https://github.com/google/fonts/blob/main/ofl/cairo/OFL.txt

@@ -1,0 +1,83 @@
+@model BenefitCardsPortal.Models.CitizenSearchViewModel
+@{ ViewData["Title"] = "استعلام المواطن"; var isEmployee = User.IsInRole("Employee"); var canReceive = User.IsInRole("CardReceiver") || User.IsInRole("PortalAdmin"); }
+<div class="page-heading"><span class="eyebrow">خدمة المستفيدين</span><h1 class="h2">استعلام عن البطاقة</h1><p class="text-muted">استخدم الحقل نفسه للبحث بالاسم أو الرقم الوطني.</p></div>
+<form asp-action="Index" method="post" class="search-card mb-4">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+    <label asp-for="Query" class="form-label fw-bold">الاسم أو الرقم الوطني</label>
+    @if (isEmployee)
+    {
+        <input asp-for="Query" class="form-control" autocomplete="off" placeholder="اكتب الاسم أو الرقم الوطني" autofocus />
+    }
+    else
+    {
+        <div class="input-group"><input asp-for="Query" type="text" class="form-control" autocomplete="off" placeholder="اكتب الاسم أو الرقم الوطني" aria-describedby="queryPrivacyHint" autofocus/><button class="btn btn-outline-secondary" type="button" id="toggleSearchQuery" aria-label="إظهار الرقم الوطني" hidden>إظهار</button></div>
+        <div id="queryPrivacyHint" class="form-text">عند إدخال أرقام فقط تُخفى كرقم وطني؛ استخدم زر إظهار لمراجعتها.</div>
+    }
+    <span asp-validation-for="Query" class="text-danger"></span>
+    <button type="submit" class="btn btn-primary mt-3 px-4">بحث</button>
+</form>
+@if (Model.HasSearched && !string.IsNullOrWhiteSpace(Model.Query))
+{
+    <div class="search-result-count mb-3" role="status"><span>عدد السجلات المطابقة</span><strong>@Model.Results.Count</strong><span>سجل</span></div>
+    if (Model.Results.Count == 0) { <div class="alert alert-info">لا توجد سجلات مطابقة للبحث.</div> }
+    else
+    {
+        <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th>اسم المستفيد</th><th>رقم التسلسل</th><th>شهر الصلاحية</th><th>حالة الاستلام</th>@if (isEmployee && canReceive) { <th>إجراء الموظف</th> }</tr></thead>
+            <tbody>
+            @foreach (var record in Model.Results)
+            {
+                <tr>
+                    <td>@record.BeneficiaryName</td><td>@record.SerialNumber</td><td>@record.BenefitBatch?.ValidityMonth/@record.BenefitBatch?.ValidityYear</td>
+                    <td><span class="status-pill @(record.IsReceived ? "status-done" : "status-wait")">@(record.IsReceived ? "استلم" : "لم يستلم")</span></td>
+                    @if (isEmployee && canReceive)
+                    {
+                        <td>
+                        @if (!record.IsReceived)
+                        {
+                            <form asp-controller="Employee" asp-action="MarkReceived" method="post" class="m-0">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@record.Id"/><input type="hidden" name="returnToSearch" value="true"/><input type="hidden" name="searchQuery" value="@Model.Query"/><button type="submit" class="btn btn-sm btn-success" data-receipt-confirm data-beneficiary="@record.BeneficiaryName" data-serial="@(record.SerialNumber ?? "غير متوفر")" data-period="@record.BenefitBatch?.ValidityMonth/@record.BenefitBatch?.ValidityYear">تسجيل الاستلام</button></form>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-2"><a asp-controller="Employee" asp-action="Receipt" asp-route-id="@record.Id" target="_blank" class="btn btn-sm btn-outline-secondary">طباعة الإيصال</a><form asp-controller="Employee" asp-action="UndoReceipt" method="post" class="m-0" onsubmit="return confirm('هل تريد إلغاء تسجيل الاستلام وإعادة البطاقة إلى لم يستلم؟')">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@record.Id"/><input type="hidden" name="returnToSearch" value="true"/><input type="hidden" name="searchQuery" value="@Model.Query"/><button type="submit" class="btn btn-sm btn-outline-danger">إلغاء التسليم</button></form></div>
+                        }
+                        </td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table></div></div>
+    }
+}
+@if (isEmployee && canReceive)
+{
+    <script>
+        document.addEventListener('click', event => {
+            const button = event.target.closest('[data-receipt-confirm]');
+            if (!button) return;
+            const message = `تأكيد تسجيل استلام البطاقة؟\nالمستفيد: ${button.dataset.beneficiary}\nرقم التسلسل: ${button.dataset.serial}\nالفترة: ${button.dataset.period}`;
+            if (!window.confirm(message)) { event.preventDefault(); event.stopImmediatePropagation(); }
+        });
+    </script>
+}
+@if (!isEmployee)
+{
+    <script>
+        (() => {
+            const input = document.getElementById('Query');
+            const toggle = document.getElementById('toggleSearchQuery');
+            if (!input || !toggle) return;
+            let explicitlyShown = false;
+            const updateMask = () => {
+                const value = input.value.trim();
+                const numeric = value.length > 0 && /^[\d\u0660-\u0669\u06f0-\u06f9\s-]+$/.test(value);
+                if (!numeric) { input.type = 'text'; toggle.hidden = true; explicitlyShown = false; }
+                else { input.type = explicitlyShown ? 'text' : 'password'; toggle.hidden = false; toggle.textContent = explicitlyShown ? 'إخفاء' : 'إظهار'; }
+            };
+            input.addEventListener('input', updateMask);
+            toggle.addEventListener('click', () => { explicitlyShown = !explicitlyShown; updateMask(); input.focus(); });
+            updateMask();
+        })();
+    </script>
+}

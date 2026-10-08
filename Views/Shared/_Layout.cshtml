@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - بوابة بطاقات المستفيدين</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/BenefitCardsPortal.styles.css" asp-append-version="true" />
+</head>
+<body>
+<header><nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm"><div class="container">
+    <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">بوابة بطاقات المستفيدين</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="mainNav"><ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" asp-controller="Search" asp-action="Index">استعلام المواطن</a></li>
+        @if (User.IsInRole("Employee")) { <li class="nav-item"><a class="nav-link" asp-controller="Employee" asp-action="Index">لوحة الموظف</a></li> }
+        @if (User.IsInRole("PortalAdmin")) { <li class="nav-item"><a class="nav-link" asp-controller="EmployeeAccounts" asp-action="Index">إدارة الموظفين</a></li> }
+        @if (User.IsInRole("PortalAdmin") || User.IsInRole("SettingsManager")) { <li class="nav-item"><a class="nav-link" asp-controller="Settings" asp-action="Index">الإعدادات</a></li> }
+        @if (User.Identity?.IsAuthenticated != true) { <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">دخول الموظف</a></li> }
+    </ul>
+    @if (User.Identity?.IsAuthenticated == true) {
+        <div class="account-actions">
+            <span class="account-chip" title="@User.Identity.Name"><span class="account-status-dot" aria-hidden="true"></span><span>@(User.IsInRole("PortalAdmin") ? "مسؤول النظام" : "موظف")</span></span>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                <button class="btn btn-logout" type="submit" aria-label="تسجيل الخروج">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </form>
+        </div>
+    }
+    </div>
+</div></nav></header>
+<main class="container py-4">
+    @if (TempData["Notice"] is string notice) { <div class="alert alert-success">@notice</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-danger">@error</div> }
+    @RenderBody()
+</main>
+<footer class="border-top mt-5 py-3 text-center text-muted small">فرع قصر خيار · منحة الزوجة والأبناء</footer>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body></html>

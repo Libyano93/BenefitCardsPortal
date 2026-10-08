@@ -1,0 +1,30 @@
+﻿# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build
+bin/
+obj/
+
+# ASP.NET Core
+wwwroot/lib/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local application data
+App_Data/
+
+# Development settings / secrets
+appsettings.Development.json
+appsettings.Local.json
+
+# OS
+.DS_Store
+Thumbs.db

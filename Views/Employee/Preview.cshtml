@@ -1,0 +1,4 @@
+@model BenefitCardsPortal.Models.BenefitBatch
+@{ ViewData["Title"] = "عرض الكشف الأصلي"; }
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3"><div><span class="eyebrow">دفعة @Model.ValidityMonth/@Model.ValidityYear</span><h1 class="h3 mb-1">الكشف الأصلي</h1><p class="text-muted mb-0">@Model.SourceFileName · عرض داخل بوابة البطاقات</p></div><div class="d-flex flex-wrap gap-2"><a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">العودة إلى مراجعة السجلات</a><a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-outline-secondary">تنزيل نسخة</a></div></div>
+<div class="document-viewer"><iframe src="@Url.Action("PreviewFile", new { id = Model.Id })" title="الكشف الأصلي" allow="fullscreen" loading="eager"></iframe></div>

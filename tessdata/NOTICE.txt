@@ -1,0 +1,7 @@
+Arabic model ara.traineddata: tesseract-ocr/tessdata_best (Apache License 2.0)
+https://github.com/tesseract-ocr/tessdata_best
+
+English model eng.traineddata: tesseract-ocr/tessdata_fast (Apache License 2.0)
+https://github.com/tesseract-ocr/tessdata_fast
+
+These models are used by the local OCR service. Uploaded records are processed on this computer and are not sent to an OCR vendor.

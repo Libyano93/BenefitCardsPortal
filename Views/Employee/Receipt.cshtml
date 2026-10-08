@@ -1,0 +1,18 @@
+@model BenefitCardsPortal.Models.ReceiptViewModel
+@{ ViewData["Title"] = "إيصال استلام"; }
+<div class="receipt-toolbar d-flex flex-wrap justify-content-between gap-2 mb-3"><a asp-controller="Search" asp-action="Index" class="btn btn-light">العودة للبحث</a><button type="button" class="btn btn-primary" onclick="window.print()">طباعة الإيصال</button></div>
+<article class="receipt-paper">
+    <header class="receipt-header"><div class="receipt-mark" aria-hidden="true">✓</div><div><div class="eyebrow">مكتب الشؤون الاجتماعية · فرع قصر خيار</div><h1>إيصال استلام بطاقة</h1><p>منحة الزوجة والأبناء</p></div></header>
+    <div class="receipt-confirmation">تم تسجيل استلام البطاقة للمستفيد الموضح أدناه</div>
+    <dl class="receipt-details">
+        <div><dt>اسم المستفيد</dt><dd>@Model.BeneficiaryName</dd></div>
+        @if (!string.IsNullOrWhiteSpace(Model.CardName)) { <div><dt>الاسم على البطاقة</dt><dd>@Model.CardName</dd></div> }
+        <div><dt>رقم التسلسل</dt><dd dir="ltr">@(Model.SerialNumber ?? "—")</dd></div>
+        <div><dt>رقم الصف في الكشف</dt><dd dir="ltr">@(Model.SourceRowNumber ?? "—")</dd></div>
+        <div><dt>جزء من رقم البطاقة</dt><dd dir="ltr">@(Model.CardNumber ?? "—")</dd></div>
+        <div><dt>شهر الصلاحية</dt><dd>@Model.Month / @Model.Year</dd></div>
+        <div><dt>تاريخ ووقت الاستلام</dt><dd dir="ltr">@Model.ReceivedAtLocal.ToString("yyyy-MM-dd HH:mm")</dd></div>
+        <div><dt>الموظف المسجل</dt><dd dir="ltr">@Model.ReceivedBy</dd></div>
+    </dl>
+    <footer class="receipt-footer"><span>رقم السجل: @Model.RecordId</span><span>فرع قصر خيار</span></footer>
+</article>

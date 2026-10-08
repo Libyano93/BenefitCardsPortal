@@ -1,0 +1,32 @@
+@model BenefitCardsPortal.Models.HomeDashboardViewModel
+@{ ViewData["Title"] = "الرئيسية"; }
+<section class="hero-card p-4 p-lg-5 rounded-5 mb-4"><div class="row align-items-center g-4"><div class="col-lg-7"><span class="badge rounded-pill hero-tag mb-3"><span class="hero-tag-icon" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><circle class="family-adult" cx="17" cy="14" r="5"/><path class="family-adult-body" d="M7 31c1.2-6 4.6-9.5 10-9.5 3.2 0 5.8 1.1 7.6 3.4"/><circle class="family-child" cx="30" cy="17" r="4"/><path class="family-child-body" d="M27 24c4.5-.1 7.4 2.2 8.5 6"/><rect class="benefit-card-icon" x="25" y="31" width="17" height="11" rx="2"/><path class="benefit-card-lines" d="M28 34.5h10M28 38h6"/></svg></span><span class="hero-tag-copy"><strong>وزارة الشؤون الاجتماعية</strong><small>فرع قصر خيار · منحة الزوجة والأبناء</small></span></span><h1 class="display-5 fw-bold">بطاقاتكم، أقرب وأسهل</h1><p class="lead mb-4">تحقق من سجلات بطاقات منحة الزوجة والأبناء، واعرف حالة استلامها بخطوات بسيطة.</p><div class="d-flex flex-wrap gap-2"><a class="btn btn-primary btn-lg" asp-controller="Search" asp-action="Index">ابحث عن بطاقتك <span aria-hidden="true">←</span></a><a class="btn btn-outline-dark btn-lg" asp-controller="Account" asp-action="Login">دخول الموظف</a></div><div class="hero-points mt-4"><span>🔒 بيانات محفوظة</span><span>✓ استعلام سريع</span><span>◎ دعم عربي</span></div></div><div class="col-lg-5"><div class="family-illustration"><img src="~/images/family-benefits.svg" alt="رسم توضيحي لأسرة ليبية مع بطاقات المستفيدين" /><div class="floating-card floating-card-one">بطاقة الزوجة <b>✓</b></div><div class="floating-card floating-card-two">منحة الأبناء <b>＋</b></div></div></div></div></section>
+<section class="public-dashboard mb-4"><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><div><span class="eyebrow">لمحة عن الخدمة</span><h2 class="h4 mb-0">إحصاءات الكشوف المعتمدة</h2></div><div class="local-clock-card" aria-label="الوقت والتاريخ في ليبيا"><div class="clock-caption"><span class="clock-live-dot" aria-hidden="true"></span><span>توقيت ليبيا</span></div><time id="libyaClock" class="digital-clock" dir="ltr">--:--:--</time><time id="libyaDate" class="arabic-date"></time></div></div><div class="row g-3"><div class="col-6 col-xl-3"><div class="public-stat stat-violet"><span>الكشوف المعتمدة</span><strong>@Model.BatchCount</strong></div></div><div class="col-6 col-xl-3"><div class="public-stat stat-blue"><span>البطاقات المسجلة</span><strong>@Model.CardCount</strong></div></div><div class="col-6 col-xl-3"><div class="public-stat stat-green"><span>تم استلامها</span><strong>@Model.ReceivedCount</strong></div></div><div class="col-6 col-xl-3"><div class="public-stat stat-amber"><span>بانتظار الاستلام</span><strong>@Model.PendingCount</strong></div></div></div><div class="public-chart mt-3"><div><h3 class="h6 mb-1">حالة التسليم</h3><p class="text-muted small mb-0">متابعة إجمالية للكشوف التي راجعها الموظف</p></div><div class="public-chart-bar" role="img" aria-label="تم استلام @Model.ReceivedCount من أصل @Model.CardCount بطاقة"><div class="public-chart-done" style="width:@(Model.CardCount == 0 ? 0 : Math.Max(3, Model.ReceivedCount * 100 / Model.CardCount))%"></div></div><div class="public-chart-key"><span><i class="approved-key"></i>تم الاستلام <b>@Model.ReceivedCount</b></span><span><i class="review-key"></i>لم يستلم <b>@Model.PendingCount</b></span></div></div></section>
+<div class="row g-3"><div class="col-md-6"><div class="feature-card h-100 feature-citizen"><span class="feature-icon">⌕</span><h2 class="h5">للمستفيد</h2><p class="mb-0">ابحث بالاسم أو بالرقم الوطني المتوفر في الكشف، واعرف إن كانت بطاقتك جاهزة للاستلام.</p></div></div><div class="col-md-6"><div class="feature-card h-100 feature-employee"><span class="feature-icon">▤</span><h2 class="h5">للموظف</h2><p class="mb-0">أدرج الكشف كاملًا، راجع البيانات المستخرجة، ثم تابع تسليم كل بطاقة.</p></div></div></div>
+@section Scripts {
+    <script>
+        (() => {
+            const clock = document.getElementById('libyaClock');
+            const date = document.getElementById('libyaDate');
+            if (!clock || !date) return;
+
+            const timeFormat = new Intl.DateTimeFormat('ar-LY', {
+                timeZone: 'Africa/Tripoli', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+            });
+            const dateFormat = new Intl.DateTimeFormat('ar-LY', {
+                timeZone: 'Africa/Tripoli', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            const updateClock = () => {
+                const now = new Date();
+                clock.textContent = timeFormat.format(now);
+                clock.dateTime = now.toISOString();
+                date.textContent = dateFormat.format(now);
+                date.dateTime = now.toISOString();
+            };
+
+            updateClock();
+            window.setInterval(updateClock, 1000);
+        })();
+    </script>
+}

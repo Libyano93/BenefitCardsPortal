@@ -1,0 +1,30 @@
+@model IReadOnlyList<BenefitCardsPortal.Models.EmployeeAccountRowViewModel>
+@{ ViewData["Title"] = "إدارة الموظفين"; var permissions = BenefitCardsPortal.Security.EmployeePermissionCatalog.Options; }
+<div class="employee-page-heading d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><span class="eyebrow">إدارة المستخدمين والصلاحيات</span><h1 class="h2 mb-1">الموظفون</h1><p class="text-muted mb-1">حدد صلاحيات كل موظف حسب مهامه. المسؤول لديه جميع الصلاحيات.</p><p class="small text-muted mb-0">بعد تغيير الصلاحيات، يسجل الموظف الخروج ثم الدخول لتحديث صلاحيات جلسته.</p></div><a asp-action="Create" class="btn btn-primary btn-lg">＋ تسجيل موظف جديد</a></div>
+<div class="employee-list-card card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0 employee-accounts-table"><thead><tr><th>اسم الموظف</th><th>البريد الإلكتروني</th><th>حالة الحساب</th><th>صلاحيات تنفيذ الإجراءات</th><th>صلاحية المسؤول</th><th>إجراء الحساب</th></tr></thead><tbody>
+@if (Model.Count == 0) { <tr><td colspan="6" class="text-center py-5 text-muted">لا توجد حسابات مسجلة.</td></tr> }
+@foreach (var employee in Model)
+{
+    <tr class="@(employee.IsActive ? "" : "employee-inactive-row")">
+        <td class="fw-semibold">@employee.DisplayName @(employee.IsCurrentUser ? "(حسابك)" : "")</td>
+        <td dir="ltr" class="text-end">@employee.Email</td>
+        <td><span class="status-pill @(employee.IsActive ? "status-done" : "status-wait")">@(employee.IsActive ? "نشط" : "معطل")</span>@if (employee.MustChangePassword) { <span class="status-pill bg-light text-dark ms-1">بانتظار كلمة مرور جديدة</span> }</td>
+        <td>
+            @if (!employee.IsEmployee)
+            {
+                <span class="status-pill bg-secondary text-white">حساب غير مفعّل كموظف</span>
+                <form asp-action="SetEmployeeRole" method="post" class="mt-2">@Html.AntiForgeryToken()<input type="hidden" name="userId" value="@employee.Id"/><button class="btn btn-sm btn-outline-primary">تفعيل كموظف</button></form>
+            }
+            else if (employee.IsAdmin) { <span class="status-pill status-done">لديه جميع الصلاحيات</span> }
+            else
+            {
+                <form asp-action="SetPermissions" method="post" class="permission-editor">@Html.AntiForgeryToken()<input type="hidden" name="userId" value="@employee.Id"/><div class="permission-checks">
+                    @foreach (var permission in permissions) { <label class="form-check"><input class="form-check-input" type="checkbox" name="permissions" value="@permission.Role" checked="@(employee.Permissions.Contains(permission.Role))" disabled="@(employee.IsCurrentUser || !employee.IsActive)"/><span class="form-check-label">@permission.Label</span></label> }
+                </div>@if (!employee.IsCurrentUser && employee.IsActive) { <button class="btn btn-sm btn-outline-primary mt-2">حفظ الصلاحيات</button> }</form>
+            }
+        </td>
+        <td>@if (employee.IsEmployee && !employee.IsCurrentUser) { <form asp-action="SetAdminRole" method="post" class="m-0">@Html.AntiForgeryToken()<input type="hidden" name="userId" value="@employee.Id"/><input type="hidden" name="grant" value="@(!employee.IsAdmin)"/><button class="btn btn-sm @(employee.IsAdmin ? "btn-outline-warning" : "btn-outline-primary")">@(employee.IsAdmin ? "إزالة المسؤول" : "منح المسؤول")</button></form> } else if (employee.IsAdmin) { <span class="text-muted small">المسؤول الحالي محمي</span> } else { <span class="text-muted">—</span> }</td>
+        <td>@if (!employee.IsCurrentUser) { <form asp-action="SetActive" method="post" class="m-0" onsubmit="return confirm('@(employee.IsActive ? "سيتم تعطيل الدخول مع الاحتفاظ بسجل الموظف. متابعة؟" : "إعادة تفعيل حساب الموظف؟")')">@Html.AntiForgeryToken()<input type="hidden" name="userId" value="@employee.Id"/><input type="hidden" name="activate" value="@(!employee.IsActive)"/><button class="btn btn-sm @(employee.IsActive ? "btn-outline-danger" : "btn-outline-success")">@(employee.IsActive ? "تعطيل الحساب" : "إعادة التفعيل")</button></form> } else { <span class="text-muted small">الحساب الحالي</span> }</td>
+    </tr>
+}
+</tbody></table></div></div>
